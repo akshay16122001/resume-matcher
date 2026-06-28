@@ -1,9 +1,9 @@
 from groq import Groq
-from dotenv import load_dotenv
+import streamlit as st
+import os
 
-load_dotenv()
-
-client = Groq()
+api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+client = Groq(api_key=api_key)
 
 def match_resume_to_jd(resume_text, jd_text):
     prompt = f"""
