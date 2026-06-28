@@ -1,5 +1,8 @@
 streamlit
 groq
 PyPDF2
+pdfplumber
+python-docx
+reportlab
 python-dotenv
 pandas

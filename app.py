@@ -1,22 +1,20 @@
 import streamlit as st
 from parser import parse_resume
-from matcher import match_resume_to_jd, generate_cover_letter
+from matcher import match_resume_to_jd, generate_ats_resume
+from pdf_generator import generate_pdf_resume
 import tempfile
 import os
 
-# Page config
 st.set_page_config(
     page_title="AI Resume Matcher",
     page_icon="🎯",
     layout="wide"
 )
 
-# Header
 st.title("🎯 AI Resume & Job Matcher")
-st.markdown("**Upload your resume and paste a job description to get instant AI-powered analysis.**")
+st.markdown("**Upload your resume + paste a JD → Get ATS-optimized tailored resume PDF!**")
 st.divider()
 
-# Two columns layout
 col1, col2 = st.columns(2)
 
 with col1:
@@ -32,65 +30,58 @@ with col2:
     st.subheader("💼 Job Description")
     jd_text = st.text_area(
         "Paste the job description here",
-        height=200,
+        height=250,
         placeholder="Paste the full job description here..."
-    )
-    company_name = st.text_input(
-        "Company Name",
-        placeholder="e.g. Google, Amazon, Microsoft"
     )
 
 st.divider()
 
-# Analyze button
-if st.button("🚀 Analyze Match", type="primary", use_container_width=True):
+if st.button("🚀 Generate Tailored Resume", type="primary", use_container_width=True):
     if not uploaded_file:
         st.error("⚠️ Please upload your resume PDF!")
     elif not jd_text:
         st.error("⚠️ Please paste a job description!")
-    elif not company_name:
-        st.error("⚠️ Please enter the company name!")
     else:
-        # Save uploaded file temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(uploaded_file.read())
             tmp_path = tmp.name
 
         try:
-            # Extract resume text
             with st.spinner("📄 Reading your resume..."):
                 resume_text = parse_resume(tmp_path)
 
-            # Get match analysis
             with st.spinner("🔍 Analyzing match..."):
                 analysis = match_resume_to_jd(resume_text, jd_text)
 
-            # Display analysis
             st.subheader("📊 Match Analysis")
             st.markdown(analysis)
             st.divider()
 
-            # Generate cover letter
-            with st.spinner("✉️ Writing your cover letter..."):
-                cover_letter = generate_cover_letter(
-                    resume_text, jd_text, company_name
+            with st.spinner("✨ Building ATS-optimized resume..."):
+                tailored_content = generate_ats_resume(resume_text, jd_text)
+
+            st.subheader("📄 Your Tailored Resume")
+            st.markdown(tailored_content)
+            st.divider()
+
+            with st.spinner("📥 Generating PDF..."):
+                output_pdf = "tailored_resume.pdf"
+                generate_pdf_resume(tailored_content, output_pdf)
+
+                with open(output_pdf, "rb") as f:
+                    pdf_bytes = f.read()
+
+                st.download_button(
+                    label="📥 Download Tailored Resume PDF",
+                    data=pdf_bytes,
+                    file_name="Akshay_Vadala_Tailored_Resume.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
                 )
 
-            # Display cover letter
-            st.subheader("✉️ Generated Cover Letter")
-            st.markdown(cover_letter)
-
-            # Download button
-            st.download_button(
-                label="📥 Download Cover Letter",
-                data=cover_letter,
-                file_name=f"cover_letter_{company_name}.txt",
-                mime="text/plain",
-                use_container_width=True
-            )
+                st.success("✅ Your tailored ATS-optimized resume is ready!")
 
         finally:
-            # Clean up temp file
             os.unlink(tmp_path)
 
 st.divider()
